@@ -1,3 +1,10 @@
+Hadoop/WordCount$TokenizerMapper.class
 Driver.class
+Hadoop/InvertedIndex$TokenizerMapper.class
 Spark/YoutubeTitleWordCount.class
+Hadoop/InvertedIndex.class
+Hadoop/WordCount$IntSumReducer.class
+Hadoop/WordCount.class
+Hadoop/InvertedIndex$IntSumReducer.class
+Hadoop/HadoopExecutor.class
 Spark/SparkExecutor.class
