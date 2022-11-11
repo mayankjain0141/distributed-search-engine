@@ -1,3 +1,5 @@
+Spark/InvertedIndex.class
 Driver.class
 Spark/YoutubeTitleWordCount.class
 Spark/SparkExecutor.class
+Spark/Convertors/Tuple3ToRDD.class

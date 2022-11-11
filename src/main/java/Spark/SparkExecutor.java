@@ -6,6 +6,9 @@ public class SparkExecutor {
         if(op == "wordCount"){
             new YoutubeTitleWordCount().Run();
         }
+        else if (op == "invertedIndex"){
+            new InvertedIndex().Run();
+        }
         return op;
     }
 
