@@ -3,7 +3,6 @@ package Spark;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
 
 import scala.Tuple2;
 import scala.Tuple3;
@@ -15,9 +14,8 @@ import java.util.List;
 
 import java.util.StringTokenizer;
 
-public class InvertedIndex
-        implements Function<Tuple2<String, Tuple2<Integer, Integer>>, JavaPairRDD<String, Tuple2<Integer, Integer>>> {
-    public JavaSparkContext sparkContext;
+public class InvertedIndex {
+    private JavaSparkContext sparkContext;
 
     public void Run() {
         SparkConf conf = new SparkConf().setAppName(InvertedIndex.class.getName()).setMaster("local[3]");
@@ -35,7 +33,6 @@ public class InvertedIndex
 
         JavaPairRDD<String, String> wordToPosInLineInFile = fileToWordInLine
                 .mapToPair(f2w -> SwapFileWithWord(f2w));
-        // Tuple3ToRDD t3tordd = new Tuple3ToRDD();
         JavaPairRDD<String, String> result = wordToPosInLineInFile.
             reduceByKey(
                 (a, b) -> {
@@ -66,14 +63,8 @@ public class InvertedIndex
         //         fileRDD -> RddToList1(fileRDD));
 
         // System.out.println(result.collectAsMap());
-        result.saveAsTextFile("output/inverted_index");
+        result.saveAsTextFile("output/inverted_index"); 
         sparkContext.close();
-    }
-
-    public JavaPairRDD<String, Tuple2<Integer, Integer>> call(Tuple2<String, Tuple2<Integer, Integer>> path) {
-        List<Tuple2<String, Tuple2<Integer, Integer>>> list = new ArrayList<>();
-        list.add(path);
-        return this.sparkContext.parallelizePairs(list);
     }
 
     public static List<Tuple2<Integer, List<Integer>>> RddToList2(JavaPairRDD<Integer, List<Integer>> lineRdd) {
@@ -99,11 +90,11 @@ public class InvertedIndex
     public static Iterator<Tuple3<String, Integer, Integer>> AddWordPos(Tuple2<String, Integer> line) {
         List<Tuple3<String, Integer, Integer>> words = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(line._1(),
-                "[\t\\\n \\+\\*\\-\\_\\.\\,\\:\\;\\!\\?\\(\\)\\<\\>\\\"\\{\\}]");
+                "[\t\\\n\r \\/\\+\\*\\-\\_\\.\\,\\:\\;\\!\\?\\(\\)\\<\\>\\\"\\{\\}]");
         int wordPos = 0;
         while (st.hasMoreTokens()) {
-            String tok = st.nextToken();
-            words.add(new Tuple3<String, Integer, Integer>(tok, line._2(), wordPos));
+            // String tok = st.nextToken().replaceAll("\n", "").replaceAll("\r", "");
+            words.add(new Tuple3<String, Integer, Integer>(st.nextToken(), line._2(), wordPos));
             wordPos++;
         }
         return words.iterator();

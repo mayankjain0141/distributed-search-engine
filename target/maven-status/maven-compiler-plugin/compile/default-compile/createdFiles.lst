@@ -1,4 +1,5 @@
 Spark/InvertedIndex.class
+Spark/SearchWord.class
 Driver.class
 Spark/YoutubeTitleWordCount.class
 Spark/SparkExecutor.class
