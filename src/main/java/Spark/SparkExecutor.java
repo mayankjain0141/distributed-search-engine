@@ -9,6 +9,9 @@ public class SparkExecutor {
         else if (op == "invertedIndex"){
             new InvertedIndex().Run();
         }
+        else if (op == "searchWord"){
+            new SearchWord().Run("bigicontop");
+        }
         return op;
     }
 

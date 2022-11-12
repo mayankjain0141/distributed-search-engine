@@ -63,7 +63,8 @@ public class InvertedIndex {
         //         fileRDD -> RddToList1(fileRDD));
 
         // System.out.println(result.collectAsMap());
-        result.saveAsTextFile("output/inverted_index"); 
+        result.saveAsTextFile("output_inverted_index"); 
+        // result.saveAsObjectFile("output_inverted_index_obj");
         sparkContext.close();
     }
 
