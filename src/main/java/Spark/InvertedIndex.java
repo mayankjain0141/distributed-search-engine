@@ -3,8 +3,8 @@ package Spark;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 
-import Spark.Convertors.Tuple3ToRDD;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -15,8 +15,9 @@ import java.util.List;
 
 import java.util.StringTokenizer;
 
-public class InvertedIndex {
-    public static JavaSparkContext sparkContext;
+public class InvertedIndex
+        implements Function<Tuple2<String, Tuple2<Integer, Integer>>, JavaPairRDD<String, Tuple2<Integer, Integer>>> {
+    public JavaSparkContext sparkContext;
 
     public void Run() {
         SparkConf conf = new SparkConf().setAppName(InvertedIndex.class.getName()).setMaster("local[3]");
@@ -29,30 +30,50 @@ public class InvertedIndex {
                 .filter(line -> !line._2()._1().isEmpty());
         JavaPairRDD<String, Tuple3<String, Integer, Integer>> fileToWordInLine = fileToLine
                 .flatMapValues(line -> AddWordPos(line))
-                .filter(text -> text._2._1().matches("[a-z]+('[a-z]+){0,1}"));
+                .filter(text -> text._2._1().length()>=3)
+                .filter(text -> text._2._1().matches("[a-z][^ ]*"));
 
-        JavaPairRDD<String, Tuple3<String, Integer, Integer>> wordToPosInLineInFile = fileToWordInLine
+        JavaPairRDD<String, String> wordToPosInLineInFile = fileToWordInLine
                 .mapToPair(f2w -> SwapFileWithWord(f2w));
-        Tuple3ToRDD t3tordd = new Tuple3ToRDD();
-        JavaPairRDD<String, JavaPairRDD<String, JavaPairRDD<Integer, List<Integer>>>> resultRDD = wordToPosInLineInFile
-                .mapValues(t3tordd)
-                .reduceByKey(
-                        (field1, field2) -> {
-                            return field1.union(field2).reduceByKey(
-                                    (a, b) -> {
-                                        return a.union(b).reduceByKey(
-                                                (x, y) -> {
-                                                    x.addAll(y);
-                                                    return x;
-                                                });
-                                    });
-                        });
+        // Tuple3ToRDD t3tordd = new Tuple3ToRDD();
+        JavaPairRDD<String, String> result = wordToPosInLineInFile.
+            reduceByKey(
+                (a, b) -> {
+                    
+                    String[] bParts = b.split(":",2);
+                    String bFile = bParts[0];
+                    int idx = a.indexOf(bFile+":");
+                    if(idx < 0){
+                        return a+" "+b;
+                    } else{
+                        // System.out.println("***"+b);
+                        String bPosIna = a.substring(idx);
+                        String aContentsBeforeB = a.substring(0, idx);
+                        String[] aContentsFromB = bPosIna.split(" ", 2);
+                        // System.out.println(aContentsFromB);
+                        String[] x = aContentsFromB[0].split(":",2);
+                        // if(x.length<2)
+                        //     System.out.println("***"+a+">>>"+b);
+                        String bFileContentsInA = x[1];
 
-        JavaPairRDD<String, List<Tuple2<String, List<Tuple2<Integer, List<Integer>>>>>> result = resultRDD.mapValues(
-                fileRDD -> RddToList1(fileRDD));
+                        String bFileContents = bParts[1];
+                        return aContentsBeforeB+bFile+":"+bFileContentsInA+bFileContents+(aContentsFromB.length>1?" "+aContentsFromB[1]:"");
+                    }
+                }
+            );
 
-        result.coalesce(1).saveAsTextFile("output/inverted_index");
+        // JavaPairRDD<String, List<Tuple2<String, List<Tuple2<Integer, List<Integer>>>>>> result = resultRDD.mapValues(
+        //         fileRDD -> RddToList1(fileRDD));
+
+        // System.out.println(result.collectAsMap());
+        result.saveAsTextFile("output/inverted_index");
         sparkContext.close();
+    }
+
+    public JavaPairRDD<String, Tuple2<Integer, Integer>> call(Tuple2<String, Tuple2<Integer, Integer>> path) {
+        List<Tuple2<String, Tuple2<Integer, Integer>>> list = new ArrayList<>();
+        list.add(path);
+        return this.sparkContext.parallelizePairs(list);
     }
 
     public static List<Tuple2<Integer, List<Integer>>> RddToList2(JavaPairRDD<Integer, List<Integer>> lineRdd) {
@@ -65,19 +86,24 @@ public class InvertedIndex {
                 lineRdd -> RddToList2(lineRdd)).collect();
     }
 
-    public static Tuple2<String, Tuple3<String, Integer, Integer>> SwapFileWithWord(
+    public static Tuple2<String, String> SwapFileWithWord(
             Tuple2<String, Tuple3<String, Integer, Integer>> f2w) {
-        return new Tuple2<String, Tuple3<String, Integer, Integer>>(f2w._2._1(),
-                new Tuple3<String, Integer, Integer>(f2w._1(), f2w._2._2(), f2w._2._3()));
+        String[] path = f2w._1().split("/", 0);
+        String file = path[path.length-1];
+        String line = String.valueOf(f2w._2._2());
+        String pos = String.valueOf(f2w._2._3());
+        String loc = file+":"+line+"#"+pos+";";
+        return new Tuple2<String, String>(f2w._2._1(), loc);
     }
 
     public static Iterator<Tuple3<String, Integer, Integer>> AddWordPos(Tuple2<String, Integer> line) {
         List<Tuple3<String, Integer, Integer>> words = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(line._1(),
-                "[\\p{javaWhitespace}\\.\\,\\:\\;\\!\\?\\(\\)\\<\\>\\\"\\{\\}]");
+                "[\t\\\n \\+\\*\\-\\_\\.\\,\\:\\;\\!\\?\\(\\)\\<\\>\\\"\\{\\}]");
         int wordPos = 0;
         while (st.hasMoreTokens()) {
-            words.add(new Tuple3<String, Integer, Integer>(st.nextToken(), line._2(), wordPos));
+            String tok = st.nextToken();
+            words.add(new Tuple3<String, Integer, Integer>(tok, line._2(), wordPos));
             wordPos++;
         }
         return words.iterator();
