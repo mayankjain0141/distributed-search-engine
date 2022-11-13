@@ -1,4 +1,3 @@
-package Hadoop;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
@@ -8,6 +7,9 @@ import java.util.ArrayList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -42,9 +44,11 @@ public class InvertedIndex {
 
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
+      FileSplit fileSplit = (FileSplit) context.getInputSplit();
+      String DocId = fileSplit.getPath().getName();
       // Split DocID and the actual text
-      String DocId = value.toString().substring(0, value.toString().indexOf("\t"));
-      String value_raw = value.toString().substring(value.toString().indexOf("\t") + 1);
+      // String DocId = value.toString().substring(0, value.toString().indexOf("\t"));
+      String value_raw = value.toString();
 
       // Reading input one line at a time and tokenizing by using space, "'", and "-"
       // characters as tokenizers.
@@ -53,11 +57,16 @@ public class InvertedIndex {
       // Iterating through all the words available in that line and forming the
       // key/value pair.
       while (itr.hasMoreTokens()) {
-        StringTokenizer wordItr = new StringTokenizer(itr.nextToken().toString(), " '-");
+        StringTokenizer wordItr = new StringTokenizer(itr.nextToken().toString(),
+            "[\t\\\n\r \\/\\+\\*\\-\\_\\.\\,\\:\\;\\!\\?\\(\\)\\<\\>\\\"\\{\\}]&#~@$%^*|");
         int wordPos = 0;
         while (wordItr.hasMoreTokens()) {
-          // Remove special characters
-          word.set(wordItr.nextToken().replaceAll("[^a-zA-Z]", "").toLowerCase());
+          // Remove non alphabetic tokens
+          String tempWord = wordItr.nextToken().toLowerCase();
+          if (!tempWord.matches("^[a-z_][^ ]*")) {
+            continue;
+          }
+          word.set(tempWord);
           if (word.toString() != "" && !word.toString().isEmpty()) {
             /*
              * Sending to output collector(Context) which in-turn passed the output to
@@ -125,7 +134,7 @@ public class InvertedIndex {
     }
   }
 
-  public void Run() throws Exception {
+  public void Run(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "inverted index");
     job.setJarByClass(InvertedIndex.class);
@@ -136,8 +145,15 @@ public class InvertedIndex {
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
-    FileInputFormat.addInputPath(job, new Path("data/textfiles"));
-    FileOutputFormat.setOutputPath(job, new Path("output/hadoop"));
+    FileSystem fs = FileSystem.get(conf);
+    Path in = new Path(args[0]);
+    Path out = new Path(args[1]);
+    // if (fs.exists(out)) {
+    // fs.delete(out, true);
+    // }
+
+    FileInputFormat.addInputPath(job, in);
+    FileOutputFormat.setOutputPath(job, out);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 
@@ -152,8 +168,15 @@ public class InvertedIndex {
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
-    FileInputFormat.addInputPath(job, new Path(args[0]));
-    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    FileSystem fs = FileSystem.get(conf);
+    Path in = new Path(args[0]);
+    Path out = new Path(args[1]);
+    // if (fs.exists(out)) {
+    // fs.delete(out, true);
+    // }
+
+    FileInputFormat.addInputPath(job, in);
+    FileOutputFormat.setOutputPath(job, out);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }
