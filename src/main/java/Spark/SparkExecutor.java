@@ -12,6 +12,9 @@ public class SparkExecutor {
         else if (op == "searchPhrase"){
             new SearchPhrase().Run("AND", "modem device that allows computer");
         }
+        else if(op == "positivityRank"){
+            new PositivityRank().Run();
+        }
         return op;
     }
 

@@ -20,3 +20,7 @@ search-word:
 inverted-index:
 	rm -rf output_inverted_index
 	make run
+
+positivity-rank:
+	rm -rf output_positivity_rank
+	make run
