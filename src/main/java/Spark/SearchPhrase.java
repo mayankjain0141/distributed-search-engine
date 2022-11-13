@@ -106,10 +106,6 @@ public class SearchPhrase {
                 JavaPairRDD<String, String> b = jsc.parallelizePairs(list);
                 parallelizedList.add(b);
             }
-            // if(parallelizedList.size()==0){
-            //     System.out.println("|| list khali...");
-            //     return;
-            // }
             tempResult1 = parallelizedList.get(0);
             for(int i=1;i<parallelizedList.size();i++){
                 JavaPairRDD<String, Tuple2<String, String>> tempResult = tempResult1.join(parallelizedList.get(i));
