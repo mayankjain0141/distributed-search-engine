@@ -1,0 +1,22 @@
+{
+  "name": "distributed-search-engine",
+  "version": "1.0.0",
+  "description": "Rest Server for CC Asg",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mayankjain0141/distributed-search-engine.git"
+  },
+  "author": "akash apoorv mayank",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mayankjain0141/distributed-search-engine/issues"
+  },
+  "homepage": "https://github.com/mayankjain0141/distributed-search-engine#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
