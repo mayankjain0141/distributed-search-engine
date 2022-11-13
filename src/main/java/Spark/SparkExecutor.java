@@ -12,6 +12,9 @@ public class SparkExecutor {
         else if (op == "searchWord"){
             new SearchWord().Run("bigicontop");
         }
+        else if (op == "searchPhrase"){
+            new SearchPhrase().Run("AND", "modem device that allows computer");
+        }
         return op;
     }
 

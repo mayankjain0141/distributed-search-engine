@@ -1,18 +1,18 @@
 package Spark;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
 import scala.Tuple2;
 import scala.Tuple3;
 
-import java.util.ArrayList;
 
-import java.util.Iterator;
-import java.util.List;
 
-import java.util.StringTokenizer;
+
 
 public class InvertedIndex {
     private JavaSparkContext sparkContext;
@@ -92,7 +92,7 @@ public class InvertedIndex {
         List<Tuple3<String, Integer, Integer>> words = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(line._1(),
                 "[\t\\\n\r \\/\\+\\*\\-\\_\\.\\,\\:\\;\\!\\?\\(\\)\\<\\>\\\"\\{\\}]");
-        int wordPos = 0;
+        int wordPos = 1;
         while (st.hasMoreTokens()) {
             // String tok = st.nextToken().replaceAll("\n", "").replaceAll("\r", "");
             words.add(new Tuple3<String, Integer, Integer>(st.nextToken(), line._2(), wordPos));
@@ -104,7 +104,7 @@ public class InvertedIndex {
     public static Iterator<Tuple2<String, Integer>> AddLineNum(String text) {
         List<Tuple2<String, Integer>> lines = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(text, "\n");
-        int lineNum = 0;
+        int lineNum = 1;
         while (st.hasMoreTokens()) {
             lines.add(new Tuple2<String, Integer>(st.nextToken().toLowerCase(), lineNum));
             lineNum++;

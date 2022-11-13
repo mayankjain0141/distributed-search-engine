@@ -10,7 +10,7 @@ import scala.Tuple2;
 public class SearchWord {
     private JavaSparkContext jsc;
     public void Run(String input){
-        SparkConf conf = new SparkConf().setAppName(InvertedIndex.class.getName()).setMaster("local[3]");
+        SparkConf conf = new SparkConf().setAppName(SearchWord.class.getName()).setMaster("local[3]");
         // Create a new spark context
         jsc = new JavaSparkContext(conf);
         // Load Dataset
